@@ -135,6 +135,7 @@
 #include "llvm/Transforms/Vectorize/LoopVectorize.h"
 #include "llvm/Transforms/Vectorize/SLPVectorizer.h"
 #include "llvm/Transforms/Vectorize/VectorCombine.h"
+#include "llvm/Transforms/Obfuscation/Example.h"
 
 using namespace llvm;
 
@@ -1485,6 +1486,12 @@ PassBuilder::buildModuleOptimizationPipeline(OptimizationLevel Level,
   // Until the issue fixed, disable this pass during pre-linking phase.
   if (!LTOPreLink)
     MPM.addPass(RelLookupTableConverterPass());
+
+  FunctionPassManager FPM;
+
+  FPM.addPass(ExampleObfuscation());
+
+  MPM.addPass(createModuleToFunctionPassAdaptor(std::move(FPM)));
 
   return MPM;
 }

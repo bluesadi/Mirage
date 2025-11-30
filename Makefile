@@ -9,5 +9,6 @@ build:
 	cmake -G Ninja -B $(BUILD_DIR) \
 		-DLLVM_ENABLE_PROJECTS="clang" \
 		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
+		-DDEFAULT_SYSROOT="$(shell xcrun --show-sdk-path)" \
 		./llvm
 	ninja -C $(BUILD_DIR)
