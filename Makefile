@@ -17,7 +17,7 @@ ifeq ($(HOST_OS),Darwin)
 	CMAKE_ARGS += -DDEFAULT_SYSROOT="$(shell xcrun --show-sdk-path)"
 endif
 
-.PHONY: all build test clean
+.PHONY: all build test clean tests-config tests-build tests-ctest
 
 all: build
 
@@ -26,9 +26,17 @@ build:
 	cmake $(CMAKE_ARGS) ./llvm-project/llvm
 	ninja -C $(BUILD_DIR)
 
-test:
-	$(BUILD_DIR)/bin/clang++ -O3 -mllvm --enable-fla-obfu -o test_flattening tests/TestFlattening.cpp
-	./test_flattening
+## Standalone tests (CTest) under tests/
+tests-config:
+	cmake -S tests -B tests/build
+
+tests-build: tests-config
+	cmake --build tests/build -j8
+
+tests-ctest: tests-build
+	ctest --test-dir tests/build -j4 --output-on-failure
+
+test: tests-ctest
 
 clean:
-	rm -rf $(BUILD_DIR) test_flattening
+	rm -rf $(BUILD_DIR) tests/build test_flattening

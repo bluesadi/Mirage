@@ -1,4 +1,5 @@
 #include "llvm/Transforms/Obfuscation/Flattening.h"
+#include "llvm/Transforms/Obfuscation/Utils.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
@@ -10,12 +11,11 @@
 #include "llvm/Support/ErrorHandling.h"
 #include <vector>
 #include <map>
-#include <random>
 #include <set>
 
 using namespace llvm;
 
-static cl::opt<bool> EnableFlattening(
+static cl::opt<bool> enableFlattening(
     "enable-fla-obfu",
     cl::init(false),
     cl::desc("Enable Control Flow Flattening Obfuscation Pass")
@@ -120,15 +120,13 @@ void FlatteningImpl::flatten() {
     swVar = builder.CreateAlloca(builder.getInt32Ty(), nullptr, "swVar");
 
     // Assign Random IDs
-    std::random_device rd;
-    std::mt19937 g(rd());
-    std::uniform_int_distribution<uint32_t> dist;
+    Rng &rng = Rng::getInstance();
     std::set<uint32_t> usedIDs;
 
     for (BasicBlock *BB : origBB) {
-        uint32_t id = dist(g);
+        uint32_t id = rng.nextUint32();
         while (usedIDs.count(id) || id == 0) { // Ensure unique and non-zero
-            id = dist(g);
+            id = rng.nextUint32();
         }
         blockIDs[BB] = id;
         usedIDs.insert(id);
@@ -245,7 +243,7 @@ void FlatteningImpl::updateTerminator(BasicBlock *BB, BasicBlock *target) {
 }
 
 PreservedAnalyses Flattening::run(Function &F, FunctionAnalysisManager &AM) {
-    if (!EnableFlattening)
+    if (!enableFlattening)
         return PreservedAnalyses::all();
 
     FlatteningImpl impl(F, AM);

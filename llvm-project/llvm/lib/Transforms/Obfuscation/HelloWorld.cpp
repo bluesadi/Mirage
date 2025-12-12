@@ -4,14 +4,14 @@
 
 namespace llvm {
 
-static cl::opt<bool> EnableExample(
-    "enable-example-obfu",
+static cl::opt<bool> enableHello(
+    "enable-hello-obfu",
     cl::init(false),
-    cl::desc("Enable My Obfuscation Pass")
+    cl::desc("Enable My Hello World Pass")
 );
 
 PreservedAnalyses ExampleObfuscation::run(Function &F, FunctionAnalysisManager &AM) {
-    if (!EnableExample)
+    if (!enableHello)
         return PreservedAnalyses::all();
 
     errs() << "Hello World! I am visiting function: " << F.getName() << "\n";

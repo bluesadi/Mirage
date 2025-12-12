@@ -137,6 +137,7 @@
 #include "llvm/Transforms/Vectorize/VectorCombine.h"
 #include "llvm/Transforms/Obfuscation/Example.h"
 #include "llvm/Transforms/Obfuscation/Flattening.h"
+#include "llvm/Transforms/Obfuscation/Substitution.h"
 
 using namespace llvm;
 
@@ -2091,6 +2092,15 @@ ModulePassManager PassBuilder::buildO0DefaultPipeline(OptimizationLevel Level,
     addRequiredLTOPreLinkPasses(MPM);
 
   MPM.addPass(createModuleToFunctionPassAdaptor(AnnotationRemarksPass()));
+
+  // Inject obfuscation passes at O0 if enabled via flags
+  {
+    FunctionPassManager FPM;
+    FPM.addPass(Flattening());
+    FPM.addPass(Substitution());
+    if (!FPM.isEmpty())
+      MPM.addPass(createModuleToFunctionPassAdaptor(std::move(FPM)));
+  }
 
   return MPM;
 }

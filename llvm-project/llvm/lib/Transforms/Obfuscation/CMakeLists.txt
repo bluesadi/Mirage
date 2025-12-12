@@ -1,6 +1,8 @@
 add_llvm_component_library(LLVMObfuscation
-  Example.cpp
+  HelloWorld.cpp
   Flattening.cpp
+  Substitution.cpp
+  Utils.cpp
 
   LINK_COMPONENTS
   Core
