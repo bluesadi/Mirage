@@ -36,8 +36,9 @@ if(EXISTS "${MIRAGE_CLANG}")
             -DAES_SRC=${CMAKE_SOURCE_DIR}/aes/aes.c
             -DOUT_BIN=${CMAKE_BINARY_DIR}/aes_sub
             -DCLANG_FLAGS=-O0
+            -DOBFU1=-mllvm
+            -DOBFU2=-enable-sub-obfu
             -P ${CMAKE_SOURCE_DIR}/cmake/CompileRunAES.cmake
-            -DOBFU1=-mllvm -DOBFU2=-enable-sub-obfu
   )
   add_test(
     NAME aes_fla
@@ -46,17 +47,34 @@ if(EXISTS "${MIRAGE_CLANG}")
             -DAES_SRC=${CMAKE_SOURCE_DIR}/aes/aes.c
             -DOUT_BIN=${CMAKE_BINARY_DIR}/aes_flat
             -DCLANG_FLAGS=-O0
+            -DOBFU1=-mllvm
+            -DOBFU2=-enable-fla-obfu
             -P ${CMAKE_SOURCE_DIR}/cmake/CompileRunAES.cmake
-            -DOBFU1=-mllvm -DOBFU2=-enable-fla-obfu
   )
   add_test(
-    NAME aes_both
+    NAME aes_bcf
     COMMAND ${CMAKE_COMMAND}
             -DMIRAGE_CLANG=${MIRAGE_CLANG}
             -DAES_SRC=${CMAKE_SOURCE_DIR}/aes/aes.c
-            -DOUT_BIN=${CMAKE_BINARY_DIR}/aes_both
+            -DOUT_BIN=${CMAKE_BINARY_DIR}/aes_bcf
             -DCLANG_FLAGS=-O0
+            -DOBFU1=-mllvm
+            -DOBFU2=-enable-bcf-obfu
             -P ${CMAKE_SOURCE_DIR}/cmake/CompileRunAES.cmake
-            -DOBFU1=-mllvm -DOBFU2=-enable-sub-obfu -DOBFU3=-mllvm -DOBFU4=-enable-fla-obfu
+  )
+  add_test(
+    NAME aes_all
+    COMMAND ${CMAKE_COMMAND}
+            -DMIRAGE_CLANG=${MIRAGE_CLANG}
+            -DAES_SRC=${CMAKE_SOURCE_DIR}/aes/aes.c
+            -DOUT_BIN=${CMAKE_BINARY_DIR}/aes_all
+            -DCLANG_FLAGS=-O0
+            -DOBFU1=-mllvm
+            -DOBFU2=-enable-bcf-obfu
+            -DOBFU3=-mllvm
+            -DOBFU4=-enable-sub-obfu
+            -DOBFU5=-mllvm
+            -DOBFU6=-enable-fla-obfu
+            -P ${CMAKE_SOURCE_DIR}/cmake/CompileRunAES.cmake
   )
 endif()

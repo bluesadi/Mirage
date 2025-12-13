@@ -17,6 +17,8 @@ foreach(i RANGE 1 8)
   endif()
 endforeach()
 
+message(STATUS "Compiling with command: ${cmd}")
+
 execute_process(COMMAND ${cmd}
   RESULT_VARIABLE comp_res
   OUTPUT_VARIABLE comp_out

@@ -75,6 +75,10 @@
 #include "llvm/Transforms/Instrumentation/InstrProfiling.h"
 #include "llvm/Transforms/Instrumentation/MemProfiler.h"
 #include "llvm/Transforms/Instrumentation/PGOInstrumentation.h"
+#include "llvm/Transforms/Obfuscation/BogusControlFlow.h"
+#include "llvm/Transforms/Obfuscation/Example.h"
+#include "llvm/Transforms/Obfuscation/Flattening.h"
+#include "llvm/Transforms/Obfuscation/Substitution.h"
 #include "llvm/Transforms/Scalar/ADCE.h"
 #include "llvm/Transforms/Scalar/AlignmentFromAssumptions.h"
 #include "llvm/Transforms/Scalar/AnnotationRemarks.h"
@@ -135,9 +139,6 @@
 #include "llvm/Transforms/Vectorize/LoopVectorize.h"
 #include "llvm/Transforms/Vectorize/SLPVectorizer.h"
 #include "llvm/Transforms/Vectorize/VectorCombine.h"
-#include "llvm/Transforms/Obfuscation/Example.h"
-#include "llvm/Transforms/Obfuscation/Flattening.h"
-#include "llvm/Transforms/Obfuscation/Substitution.h"
 
 using namespace llvm;
 
@@ -183,9 +184,9 @@ static cl::opt<bool> EnablePostPGOLoopRotation(
     "enable-post-pgo-loop-rotation", cl::init(true), cl::Hidden,
     cl::desc("Run the loop rotation transformation after PGO instrumentation"));
 
-static cl::opt<bool> EnableGlobalAnalyses(
-    "enable-global-analyses", cl::init(true), cl::Hidden,
-    cl::desc("Enable inter-procedural analyses"));
+static cl::opt<bool>
+    EnableGlobalAnalyses("enable-global-analyses", cl::init(true), cl::Hidden,
+                         cl::desc("Enable inter-procedural analyses"));
 
 static cl::opt<bool>
     RunPartialInlining("enable-partial-inlining", cl::init(false), cl::Hidden,
@@ -1086,11 +1087,10 @@ PassBuilder::buildModuleSimplificationPipeline(OptimizationLevel Level,
   // and prior to optimizing globals.
   // FIXME: This position in the pipeline hasn't been carefully considered in
   // years, it should be re-analyzed.
-  MPM.addPass(IPSCCPPass(
-              IPSCCPOptions(/*AllowFuncSpec=*/
-                            Level != OptimizationLevel::Os &&
-                            Level != OptimizationLevel::Oz &&
-                            !isLTOPreLink(Phase))));
+  MPM.addPass(IPSCCPPass(IPSCCPOptions(/*AllowFuncSpec=*/
+                                       Level != OptimizationLevel::Os &&
+                                       Level != OptimizationLevel::Oz &&
+                                       !isLTOPreLink(Phase))));
 
   // Attach metadata to indirect call sites indicating the set of functions
   // they may target at run-time. This should follow IPSCCP.
@@ -1492,7 +1492,9 @@ PassBuilder::buildModuleOptimizationPipeline(OptimizationLevel Level,
   FunctionPassManager FPM;
 
   FPM.addPass(ExampleObfuscation());
+  FPM.addPass(BogusControlFlow());
   FPM.addPass(Flattening());
+  FPM.addPass(Substitution());
 
   MPM.addPass(createModuleToFunctionPassAdaptor(std::move(FPM)));
 
@@ -1566,7 +1568,7 @@ PassBuilder::buildFatLTODefaultPipeline(OptimizationLevel Level, bool ThinLTO,
 ModulePassManager
 PassBuilder::buildThinLTOPreLinkDefaultPipeline(OptimizationLevel Level) {
   if (Level == OptimizationLevel::O0)
-    return buildO0DefaultPipeline(Level, /*LTOPreLink*/true);
+    return buildO0DefaultPipeline(Level, /*LTOPreLink*/ true);
 
   ModulePassManager MPM;
 
@@ -2096,6 +2098,8 @@ ModulePassManager PassBuilder::buildO0DefaultPipeline(OptimizationLevel Level,
   // Inject obfuscation passes at O0 if enabled via flags
   {
     FunctionPassManager FPM;
+    FPM.addPass(ExampleObfuscation());
+    FPM.addPass(BogusControlFlow());
     FPM.addPass(Flattening());
     FPM.addPass(Substitution());
     if (!FPM.isEmpty())
